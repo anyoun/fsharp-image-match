@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharpImageMatch", "FSharpImageMatch\FSharpImageMatch.fsproj", "{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageLib", "ImageLib\ImageLib.csproj", "{4475B409-9B07-4067-9C4C-85FC4EF60FBB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Debug|x86.ActiveCfg = Debug|x86
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Debug|x86.Build.0 = Debug|x86
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Release|x86.ActiveCfg = Release|x86
+		{FFDA920B-FF64-49B2-BAF7-3443DA8C44E8}.Release|x86.Build.0 = Release|x86
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4475B409-9B07-4067-9C4C-85FC4EF60FBB}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
