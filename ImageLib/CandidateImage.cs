@@ -19,16 +19,16 @@ namespace ImageLib {
 	}
 
 	public class CandidateImage {
-		private readonly IList<ColoredRectangle> m_Rectangles;
+		private readonly ColoredRectangle[] m_Rectangles;
 
 		public CandidateImage() {
 			m_Rectangles = new ColoredRectangle[0];
 		}
-		public CandidateImage(IList<ColoredRectangle> rectangles) {
+		public CandidateImage(ColoredRectangle[] rectangles) {
 			m_Rectangles = rectangles;
 		}
 
-		public IList<ColoredRectangle> Rectangles { get { return m_Rectangles; } }
+		public ColoredRectangle[] Rectangles { get { return m_Rectangles; } }
 		public float Fitness { get; set; }
 	}
 
@@ -199,8 +199,8 @@ namespace ImageLib {
 	//    }
 	//}
 
-	public struct FastColor {
-		private readonly Int32 Value;
+	public struct FastColor : IEquatable<FastColor> {
+		public readonly Int32 Value;
 		public FastColor(byte alpha, byte red, byte green, byte blue) {
 			Value = alpha << 24 | red << 16 | green << 8 | blue;
 		}
@@ -208,14 +208,23 @@ namespace ImageLib {
 		public byte A { get { return (byte)(Value >> 24 & 255); } }
 		public byte R { get { return (byte)(Value >> 16 & 255); } }
 		public byte G { get { return (byte)(Value >> 8 & 255); } }
-		public byte B { get { return (byte)(Value >> 0 & 255); } }
+		public byte B { get { return (byte)(Value & 255); } }
 
+		private static byte ToByte(int i) {
+			return i > 255 ? (byte)255 : (byte)i;
+		}
 		public FastColor Blend(FastColor b) {
+			byte aBlend = (byte)(b.A * (255 - this.A));
+			byte newA = ToByte(this.A + aBlend);
 			return new FastColor(
-				(byte)(this.A + b.A * (1 - this.A)),
-				(byte)(this.A * this.R + b.A * b.R * ((byte)1 - this.A)),
-				(byte)(this.A * this.G + b.A * b.G * ((byte)1 - this.A)),
-				(byte)(this.A * this.B + b.A * b.B * ((byte)1 - this.A)));
+				newA,
+				(byte)((this.A * this.R + b.R * aBlend) / newA),
+				(byte)((this.A * this.G + b.G * aBlend) / newA),
+				(byte)((this.A * this.B + b.B * aBlend) / newA));
+		}
+
+		public override string ToString() {
+			return string.Format("A:{0} R:{1} G:{2} B:{3}", A, R, G, B);
 		}
 
 		public static readonly FastColor Black = new FastColor(255, 0, 0, 0);
@@ -223,6 +232,10 @@ namespace ImageLib {
 
 		public Color ToColor() {
 			return Color.FromArgb(Value);
+		}
+
+		public bool Equals(FastColor other) {
+			return Value == other.Value;
 		}
 	}
 }

@@ -54,14 +54,21 @@ type WindowHost(originalImage:Bitmap, permutationCount:ref<int>) =
         GL.Scale(1.0f, -1.0f, 1.0f)
         GL.Translate(0.0f, float32 -this.Height, 0.0f)
         textPrinter.Print(sprintf "Iteration %i Fitness: %f" permutationCount.Value currentCandidate.Fitness, font, Color.White)
-        GL.PopMatrix()
 
-        GL.PushMatrix()
-        GL.Translate(0.0f, imageHeight, 0.0f)
-        GL.Scale(1.0f, -1.0f, 1.0f)
+        GL.Translate(2.0f, 32.0f, 0.0f)
+        
+        let drawImageOutline () =
+            GL.Color3(Color.Orange)
+            GL.Begin(BeginMode.LineLoop)
+            GL.Vertex2(0.0f, 0.0f)
+            GL.Vertex2(imageWidth, 0.0f)
+            GL.Vertex2(imageWidth, imageHeight)
+            GL.Vertex2(0.0f, imageHeight)
+            GL.End();
 
+        drawImageOutline ()
         for rect in currentCandidate.Rectangles do
-            GL.Color4(rect.Color.A, rect.Color.R, rect.Color.G, rect.Color.B)
+            GL.Color4(rect.Color.R, rect.Color.G, rect.Color.B, rect.Color.A)
             GL.Begin(BeginMode.Quads)
             GL.Vertex2(rect.X, rect.Y)
             GL.Vertex2(rect.X, rect.Y+rect.Height)
@@ -69,22 +76,25 @@ type WindowHost(originalImage:Bitmap, permutationCount:ref<int>) =
             GL.Vertex2(rect.X+rect.Width, rect.Y)
             GL.End()
 
-        GL.PopMatrix()
 
+        GL.Translate(imageWidth+2.0f, 0.0f, 0.0f)
+        drawImageOutline ()
         GL.Color3(Color.White)
         GL.BindTexture(TextureTarget.Texture2D, origImageTexture)
         
         GL.Begin(BeginMode.Quads)
 
-        GL.TexCoord2(0.0f, 1.0f)
-        GL.Vertex2(imageWidth, 0.0f)
-        GL.TexCoord2(1.0f, 1.0f)
-        GL.Vertex2(imageWidth+imageWidth, 0.0f)
-        GL.TexCoord2(1.0f, 0.0f)
-        GL.Vertex2(imageWidth+imageWidth, imageHeight)
         GL.TexCoord2(0.0f, 0.0f)
+        GL.Vertex2(0.0f, 0.0f)
+        GL.TexCoord2(0.0f, 1.0f)
+        GL.Vertex2(0.0f, imageHeight)
+        GL.TexCoord2(1.0f, 1.0f)
         GL.Vertex2(imageWidth, imageHeight)
+        GL.TexCoord2(1.0f, 0.0f)
+        GL.Vertex2(imageWidth, 0.0f)
 
         GL.End();
+
+        GL.PopMatrix()
 
         this.SwapBuffers()
