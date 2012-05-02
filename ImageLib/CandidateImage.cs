@@ -16,6 +16,11 @@ namespace ImageLib {
 		}
 		public readonly int X, Y, Width, Height;
 		public readonly FastColor Color;
+
+		public int Left { get { return X; } }
+		public int Right { get { return X + Width; } }
+		public int Top { get { return Y; } }
+		public int Bottom { get { return Y + Height; } }
 	}
 
 	public class CandidateImage {
@@ -204,6 +209,9 @@ namespace ImageLib {
 		public FastColor(byte alpha, byte red, byte green, byte blue) {
 			Value = alpha << 24 | red << 16 | green << 8 | blue;
 		}
+		public FastColor(byte red, byte green, byte blue)
+			: this(255, red, green, blue) {
+		}
 
 		public byte A { get { return (byte)(Value >> 24 & 255); } }
 		public byte R { get { return (byte)(Value >> 16 & 255); } }
@@ -214,7 +222,7 @@ namespace ImageLib {
 			return i > 255 ? (byte)255 : (byte)i;
 		}
 		public FastColor Blend(FastColor b) {
-			byte aBlend = (byte)(b.A * (255 - this.A));
+			byte aBlend = (byte)((255 - this.A));
 			byte newA = ToByte(this.A + aBlend);
 			return new FastColor(
 				newA,

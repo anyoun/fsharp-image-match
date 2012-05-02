@@ -1,6 +1,4 @@
-﻿// Learn more about F# at http://fsharp.net
-
-namespace FSharpImageMatch
+﻿namespace FSharpImageMatch
 open System
 open System.Windows.Forms
 open System.Drawing
@@ -14,7 +12,10 @@ module Program =
     let nextColor () = 
         //Color.FromArgb(alpha, rand.Next(255), rand.Next(255), rand.Next(255))
         //FastColor(alpha, 255uy, 255uy, 255uy)
+        //FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
         FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
+        //FastColor(alpha, 255uy, 255uy, 255uy)
+
     let createRandomRectangle maxWidth maxHeight =
         let l = rand.Next maxWidth
         let r = rand.Next maxWidth
@@ -40,20 +41,49 @@ module Program =
             member this.next permCount bestCandidate = (bestCandidate, false)
     
     type MoveEdgePermuter(maxWidth : int, maxHeight: int) = 
+        let mutable annealCount = 2.0
         interface IPermutationStrategy with
             member this.name () = "Move Edge"
             member this.next permCount bestCandidate =
-                if permCount % 1000 = 0 then
+                if float(permCount) > (annealCount*1000.0) then
+                    annealCount <- float(Math.Pow(annealCount,1.5))
                     (addRandomRectangle bestCandidate maxWidth maxHeight, true)
                 else
-                    let index = rand.Next( bestCandidate.Rectangles.Length - 1 )
+                    let index = rand.Next( bestCandidate.Rectangles.Length )
                     let oldRect = bestCandidate.Rectangles.[index]
                     let newRect = match rand.Next(4) with
-                                  | 0 -> new ColoredRectangle(rand.Next maxWidth, oldRect.Y, oldRect.Width, oldRect.Height, oldRect.Color)
-                                  | 1 -> new ColoredRectangle(oldRect.X, rand.Next maxHeight, oldRect.Width, oldRect.Height, oldRect.Color)
-                                  | 2 -> new ColoredRectangle(oldRect.X, oldRect.Y, rand.Next(1,maxWidth-oldRect.Width), oldRect.Height, oldRect.Color)
-                                  | 3 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, rand.Next(1,maxHeight-oldRect.Height), oldRect.Color)
+                                  | 0 -> new ColoredRectangle(rand.Next (maxWidth-oldRect.Width), oldRect.Y, oldRect.Width, oldRect.Height, oldRect.Color)
+                                  | 1 -> new ColoredRectangle(oldRect.X, rand.Next (maxHeight-oldRect.Height), oldRect.Width, oldRect.Height, oldRect.Color)
+                                  | 2 -> new ColoredRectangle(oldRect.X, oldRect.Y, rand.Next(1,maxWidth-oldRect.X), oldRect.Height, oldRect.Color)
+                                  | 3 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, rand.Next(1,maxHeight-oldRect.Y), oldRect.Color)
                                   //| 4 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, oldRect.Height, nextColor())
+                                  | _ -> raise(Exception())
+                    let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
+                    l.[index] <- newRect
+                    (new CandidateImage(l), false)
+
+    type MoveCornerPermuter(maxWidth : int, maxHeight: int) = 
+        let mutable annealCount = 2.0
+        interface IPermutationStrategy with
+            member this.name () = "Move Corner"
+            member this.next permCount bestCandidate =
+                if float(permCount) > (annealCount*2000.0) then
+                    annealCount <- float(Math.Pow(annealCount,1.1))
+                    (addRandomRectangle bestCandidate maxWidth maxHeight, true)
+                else
+                    let index = rand.Next( bestCandidate.Rectangles.Length )
+                    let oldRect = bestCandidate.Rectangles.[index]
+                    let newRect = match rand.Next(5) with
+                                  | 0 | 1 -> 
+                                    let x = rand.Next(oldRect.Right)
+                                    let y = rand.Next(oldRect.Bottom)
+                                    new ColoredRectangle(x, y, oldRect.Right-x, oldRect.Bottom-y, oldRect.Color)
+                                  | 2 | 3 -> 
+                                    let r = rand.Next(oldRect.Left, maxWidth)
+                                    let b = rand.Next(oldRect.Top, maxHeight)
+                                    new ColoredRectangle(oldRect.X, oldRect.Y, r-oldRect.Left, b-oldRect.Top, oldRect.Color)
+                                  | 4 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, oldRect.Height, nextColor())
+                                  | _ -> raise(Exception())
                     let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
                     l.[index] <- newRect
                     (new CandidateImage(l), false)
@@ -63,44 +93,19 @@ module Program =
         interface IPermutationStrategy with
             member this.name () = "Replace Square"
             member this.next permCount bestCandidate =
-                if float(permCount) > (annealCount*1000.0) then
-                    annealCount <- float(Math.Pow(annealCount,1.5))
+                if float(permCount) > (annealCount*2000.0) then
+                    annealCount <- float(Math.Pow(annealCount,1.1))
                     (addRandomRectangle bestCandidate maxWidth maxHeight, true)
                 else
                     let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
                     let index = rand.Next( bestCandidate.Rectangles.Length - 1 )
                     l.[index] <- createRandomRectangle maxWidth maxHeight
                     (new CandidateImage(l), false)
-    
-    let permutationCount = ref 0
 
-    let original = new Bitmap (Bitmap.FromFile("c:\Users\willt\My Dropbox\Genetic\monalisa_small_grey.png"))
-    let maxWidth = original.Width
-    let maxHeight = original.Height
+    let state = new GameState(Image.FromFile("c:\Users\willt\My Dropbox\Genetic\monalisa_small_grey.png") :?> Bitmap)
+    let glWindow = new PreviewWindow(state)
 
-    let glWindow = new WindowHost(original, permutationCount)
-    let origData = original.LockBits()
-
-    let getCandidatePixel (image:CandidateImage) x y =
-        let mutable c = FastColor.Black
-        for i = 0 to image.Rectangles.Length-1 do
-            let h = image.Rectangles.[i]
-            if x >= h.X && y >= h.Y && x < h.X+h.Width && y < h.Y+h.Height then
-                //c <- c.Blend(h.Color)
-                c <- h.Color.Blend(c)
-        c
-    let calculateFitness (original:DisposableBitmapData) (candidate:CandidateImage) =
-        let mutable error = 0.0f
-        for y = 0 to original.Height do
-            for x = 0 to original.Width do
-                let origPixel = original.GetPixel(x,y)
-                let candPixel = getCandidatePixel candidate x y
-                error <- error + float32 ((origPixel.R-candPixel.R) * (origPixel.R-candPixel.R))
-                error <- error + float32 ((origPixel.G-candPixel.G) * (origPixel.G-candPixel.G))
-                error <- error + float32 ((origPixel.B-candPixel.B) * (origPixel.B-candPixel.B))
-        1.0f-error
-
-    let permuter = ReplaceSquarePermuter(maxWidth, maxHeight) :> IPermutationStrategy
+    let permuter = MoveCornerPermuter(state.Width, state.Height) :> IPermutationStrategy
 
     let saveCandidateFile (candidate:CandidateImage) =
         try
@@ -109,56 +114,56 @@ module Program =
         with
         | _ -> () //Don't care about errors
 
-    let bestCandidate = ref(addRandomRectangle (CandidateImage()) maxWidth maxHeight)
-    bestCandidate.Value.Fitness <- calculateFitness origData !bestCandidate
+    state.BestCandidate.Value <- addRandomRectangle (CandidateImage()) state.Width state.Height
+    state.BestCandidate.Value.Fitness <- Fitness.calculateFitness state.BitmapData !state.BestCandidate
 
     let iteration () =
         let setBestCandidate c =
-            bestCandidate.Value <- c
-            glWindow.UpdatePreview bestCandidate.Value
-            saveCandidateFile !bestCandidate
-        let cand, force = permuter.next !permutationCount !bestCandidate 
-        Interlocked.Increment permutationCount |> ignore
-        cand.Fitness <- calculateFitness origData cand
+            state.BestCandidate.Value <- c
+            saveCandidateFile !state.BestCandidate
+        let cand, force = permuter.next !state.PermutationCount !state.BestCandidate 
+        Interlocked.Increment state.PermutationCount |> ignore
+        cand.Fitness <- Fitness.calculateFitness state.BitmapData cand
+        state.SomeCandidate.Value <- cand
         if force then
             setBestCandidate cand
-        else if cand.Fitness > (!bestCandidate).Fitness then
+        else if cand.Fitness > (!state.BestCandidate).Fitness then
             setBestCandidate cand
 
     let benchmark () =
         let benchmarkCount = 1000
-        let add c = addRandomRectangle c maxWidth maxHeight
+        let add c = addRandomRectangle c state.Width state.Height
         let testImage = CandidateImage() |> add |> add |> add |> add
         let sw = System.Diagnostics.Stopwatch.StartNew()
         for i = 0 to benchmarkCount do
-            calculateFitness origData testImage |> ignore
+            Fitness.calculateFitness state.BitmapData testImage |> ignore
         printfn "%f calculateFitness per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
 
         let sw = System.Diagnostics.Stopwatch.StartNew()
         for i = 0 to benchmarkCount do
-            for y = 0 to original.Height do
-                for x = 0 to original.Width do
-                    origData.GetPixel(x,y) |> ignore
+            for y = 0 to state.Height do
+                for x = 0 to state.Width do
+                    state.BitmapData.GetPixel(x,y) |> ignore
         printfn "%f access bitmaps per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
 
         let sw = System.Diagnostics.Stopwatch.StartNew()
         for i = 0 to benchmarkCount do
-            for y = 0 to original.Height do
-                for x = 0 to original.Width do
-                    getCandidatePixel testImage x y |> ignore
+            for y = 0 to state.Height do
+                for x = 0 to state.Width do
+                    Fitness.getCandidatePixel testImage x y |> ignore
         printfn "%f access candidates per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
     
     if false then
         benchmark ()
     else if false then
-        let cand = CandidateImage [| ColoredRectangle(2, 2, maxWidth-4, maxHeight-4, FastColor(255uy, 255uy, 0uy, 255uy))  |] 
-        glWindow.UpdatePreview cand
+        let cand = CandidateImage [| ColoredRectangle(2, 2, state.Width-4, state.Height-4, FastColor(255uy, 255uy, 0uy, 255uy))  |] 
         glWindow.Run(10.0, 10.0)
     else
         let threadProc () =  while true do iteration()
         for i = 0 to 3 do
             let t = new Thread(threadProc)
             t.Priority <- ThreadPriority.Lowest
+            t.IsBackground <- true
             t.Start()
 
         glWindow.Run(10.0, 10.0)

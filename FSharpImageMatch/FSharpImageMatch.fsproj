@@ -74,7 +74,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WindowHost.fs" />
+    <Compile Include="Fitness.fs" />
     <Compile Include="PreviewWindow.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
