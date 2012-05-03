@@ -9,6 +9,7 @@ open System.Windows.Forms
 open System.Drawing
 open System.Drawing.Imaging
 open System.Diagnostics
+open System.Collections.Generic
 open ImageLib
 
 type PreviewWindow(state:GameState) =
@@ -19,8 +20,9 @@ type PreviewWindow(state:GameState) =
     let imageWidth = float32 (state.Width)
     let imageHeight = float32 (state.Height)
 
-    let mutable lastPermutationCount = 0
-    let mutable lastTime = Stopwatch.GetTimestamp()
+    let recentFrameCount = 5 * 30
+    let recentFrameTimestamps = new LinkedList<int64>()
+    let recentFramePermutationCounts = new LinkedList<int>()
   
     let drawImageOutline () =
         GL.Color3(Color.Orange)
@@ -59,6 +61,9 @@ type PreviewWindow(state:GameState) =
         GL.Enable(EnableCap.Blend)
         GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha)
 
+    member this.RunWindow() = 
+        this.Run(10.0, 10.0)
+
     override this.OnResize(e) = 
         GL.Viewport(0, 0, this.ClientSize.Width, this.ClientSize.Height)
         let perspective = OpenTK.Matrix4.CreateOrthographicOffCenter( 0.0f, float32 this.ClientSize.Width, 0.0f, float32 this.ClientSize.Height, -10.0f, 10.0f)
@@ -67,7 +72,6 @@ type PreviewWindow(state:GameState) =
 
     override this.OnUpdateFrame(e) = 
         base.OnUpdateFrame(e)
-        //do something?
 
     override this.OnRenderFrame(e) =
         base.OnRenderFrame(e)
@@ -80,11 +84,19 @@ type PreviewWindow(state:GameState) =
         GL.PushMatrix()
         GL.Scale(1.0f, -1.0f, 1.0f)
         GL.Translate(0.0f, float32 -this.ClientSize.Height, 0.0f)
-        let ticks = float(Stopwatch.GetTimestamp()-lastTime)/float(Stopwatch.Frequency)
-        let ips = float(!state.PermutationCount - lastPermutationCount)/ticks
+        
+        recentFramePermutationCounts.AddLast(!state.PermutationCount) |> ignore
+        if recentFramePermutationCounts.Count > recentFrameCount then
+            recentFramePermutationCounts.RemoveFirst()
+        recentFrameTimestamps.AddLast(Stopwatch.GetTimestamp()/Stopwatch.Frequency) |> ignore
+        if recentFrameTimestamps.Count > recentFrameCount then
+            recentFrameTimestamps.RemoveFirst()
+
+        let totalTicks = recentFrameTimestamps.Last.Value - recentFrameTimestamps.First.Value
+        let countChange = recentFramePermutationCounts.Last.Value - recentFramePermutationCounts.First.Value
+        let ips = float(countChange)/float(totalTicks)
+        
         textPrinter.Print(sprintf "Iteration: %i   at %.0f ips" !state.PermutationCount ips, font, Color.White)
-        lastPermutationCount <- !state.PermutationCount
-        lastTime <-Stopwatch.GetTimestamp()
 
         //Draw some candidate
         GL.Translate(2.0f, 20.0f, 0.0f)

@@ -166,5 +166,5 @@ module Program =
             t.IsBackground <- true
             t.Start()
 
-        glWindow.Run(10.0, 10.0)
+        glWindow.RunWindow()
         glWindow.Dispose()
