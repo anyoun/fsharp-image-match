@@ -8,6 +8,7 @@ open OpenTK.Compatibility
 open System.Windows.Forms
 open System.Drawing
 open System.Drawing.Imaging
+open System.Diagnostics
 open ImageLib
 
 type PreviewWindow(state:GameState) =
@@ -17,6 +18,9 @@ type PreviewWindow(state:GameState) =
     let mutable origImageTexture = 0
     let imageWidth = float32 (state.Width)
     let imageHeight = float32 (state.Height)
+
+    let mutable lastPermutationCount = 0
+    let mutable lastTime = Stopwatch.GetTimestamp()
   
     let drawImageOutline () =
         GL.Color3(Color.Orange)
@@ -76,8 +80,11 @@ type PreviewWindow(state:GameState) =
         GL.PushMatrix()
         GL.Scale(1.0f, -1.0f, 1.0f)
         GL.Translate(0.0f, float32 -this.ClientSize.Height, 0.0f)
-        let ips = float(!state.PermutationCount)/(DateTime.Now-state.StartTime).TotalSeconds
+        let ticks = float(Stopwatch.GetTimestamp()-lastTime)/float(Stopwatch.Frequency)
+        let ips = float(!state.PermutationCount - lastPermutationCount)/ticks
         textPrinter.Print(sprintf "Iteration: %i   at %.0f ips" !state.PermutationCount ips, font, Color.White)
+        lastPermutationCount <- !state.PermutationCount
+        lastTime <-Stopwatch.GetTimestamp()
 
         //Draw some candidate
         GL.Translate(2.0f, 20.0f, 0.0f)
@@ -97,7 +104,7 @@ type PreviewWindow(state:GameState) =
         GL.Translate(0.0f, 20.0f, 0.0f)
         drawImageOutline ()
         GL.Begin(BeginMode.Points)
-        let maxError = float (255*255)
+        let maxError = float (255*25)
         for y = 0 to int imageHeight do
             for x = 0 to int imageWidth do
                 let error = float (Fitness.getPixelError state.BitmapData bestCand x y)
