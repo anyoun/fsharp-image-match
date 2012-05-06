@@ -120,7 +120,7 @@ module Program =
     let iteration () =
         let setBestCandidate c =
             state.BestCandidate.Value <- c
-            Persistence.saveCandidateFile !state.BestCandidate
+            Persistence.saveCandidateFile !state.PermutationCount !state.BestCandidate
         let cand, force = permuter.next !state.PermutationCount !state.BestCandidate 
         Interlocked.Increment state.PermutationCount |> ignore
         cand.Fitness <- Fitness.calculateFitness state.BitmapData cand

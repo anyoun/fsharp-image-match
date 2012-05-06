@@ -8,10 +8,11 @@ open System.Text.RegularExpressions
 open ImageLib
 
 module Persistence =
-    let saveCandidateFile (candidate:CandidateImage) =
+    let saveCandidateFile (count:int) (candidate:CandidateImage) =
+        let lines = [ for r in candidate.Rectangles -> sprintf "%ix%i %ix%i %s" r.X r.Y r.Width r.Height (r.Color.ToString()) ]
+        let lines = (string count) :: lines
         try
-            System.IO.File.WriteAllLines( "save.txt", 
-                [ for r in candidate.Rectangles -> sprintf "%ix%i %ix%i %s" r.X r.Y r.Width r.Height (r.Color.ToString()) ] )
+            System.IO.File.WriteAllLines( "save.txt", lines )                
         with
         | _ -> () //Don't care about errors
 
