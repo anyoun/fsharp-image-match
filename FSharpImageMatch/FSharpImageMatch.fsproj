@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fitness.fs" />
+    <Compile Include="Persistence.fs" />
     <Compile Include="PreviewWindow.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

@@ -62,7 +62,7 @@ type PreviewWindow(state:GameState) =
         GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha)
 
     member this.RunWindow() = 
-        this.Run(10.0, 10.0)
+        this.Run(1.0, 60.0)
 
     override this.OnResize(e) = 
         GL.Viewport(0, 0, this.ClientSize.Width, this.ClientSize.Height)

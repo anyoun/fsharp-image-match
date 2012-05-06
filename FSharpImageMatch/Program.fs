@@ -35,92 +35,92 @@ module Program =
         abstract next : int -> CandidateImage -> (CandidateImage * bool)
         end
     
-    type NullPermuter = 
-        interface IPermutationStrategy with
-            member this.name () = "Null Permuter"
-            member this.next permCount bestCandidate = (bestCandidate, false)
+//    type NullPermuter = 
+//        interface IPermutationStrategy with
+//            member this.name () = "Null Permuter"
+//            member this.next permCount bestCandidate = (bestCandidate, false)
     
     type MoveEdgePermuter(maxWidth : int, maxHeight: int) = 
-        let mutable annealCount = 2.0
+        let mutable annealCount = 1000
         interface IPermutationStrategy with
             member this.name () = "Move Edge"
             member this.next permCount bestCandidate =
-                if float(permCount) > (annealCount*1000.0) then
-                    annealCount <- float(Math.Pow(annealCount,1.5))
-                    (addRandomRectangle bestCandidate maxWidth maxHeight, true)
-                else
-                    let index = rand.Next( bestCandidate.Rectangles.Length )
-                    let oldRect = bestCandidate.Rectangles.[index]
-                    let newRect = match rand.Next(4) with
-                                  | 0 -> new ColoredRectangle(rand.Next (maxWidth-oldRect.Width), oldRect.Y, oldRect.Width, oldRect.Height, oldRect.Color)
-                                  | 1 -> new ColoredRectangle(oldRect.X, rand.Next (maxHeight-oldRect.Height), oldRect.Width, oldRect.Height, oldRect.Color)
-                                  | 2 -> new ColoredRectangle(oldRect.X, oldRect.Y, rand.Next(1,maxWidth-oldRect.X), oldRect.Height, oldRect.Color)
-                                  | 3 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, rand.Next(1,maxHeight-oldRect.Y), oldRect.Color)
-                                  //| 4 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, oldRect.Height, nextColor())
-                                  | _ -> raise(Exception())
-                    let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
-                    l.[index] <- newRect
-                    (new CandidateImage(l), false)
-
-    type MoveCornerPermuter(maxWidth : int, maxHeight: int) = 
-        let mutable annealCount = 2.0
-        interface IPermutationStrategy with
-            member this.name () = "Move Corner"
-            member this.next permCount bestCandidate =
-                if float(permCount) > (annealCount*2000.0) then
-                    annealCount <- float(Math.Pow(annealCount,1.1))
+                if permCount > annealCount then
+                    annealCount <- annealCount + 2000
                     (addRandomRectangle bestCandidate maxWidth maxHeight, true)
                 else
                     let index = rand.Next( bestCandidate.Rectangles.Length )
                     let oldRect = bestCandidate.Rectangles.[index]
                     let newRect = match rand.Next(5) with
-                                  | 0 | 1 -> 
-                                    let x = rand.Next(oldRect.Right)
-                                    let y = rand.Next(oldRect.Bottom)
-                                    new ColoredRectangle(x, y, oldRect.Right-x, oldRect.Bottom-y, oldRect.Color)
-                                  | 2 | 3 -> 
-                                    let r = rand.Next(oldRect.Left, maxWidth)
-                                    let b = rand.Next(oldRect.Top, maxHeight)
-                                    new ColoredRectangle(oldRect.X, oldRect.Y, r-oldRect.Left, b-oldRect.Top, oldRect.Color)
+                                  | 0 -> new ColoredRectangle(rand.Next (maxWidth-oldRect.Width), oldRect.Y, oldRect.Width, oldRect.Height, oldRect.Color)
+                                  | 1 -> new ColoredRectangle(oldRect.X, rand.Next (maxHeight-oldRect.Height), oldRect.Width, oldRect.Height, oldRect.Color)
+                                  | 2 -> new ColoredRectangle(oldRect.X, oldRect.Y, rand.Next(1,maxWidth-oldRect.X), oldRect.Height, oldRect.Color)
+                                  | 3 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, rand.Next(1,maxHeight-oldRect.Y), oldRect.Color)
                                   | 4 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, oldRect.Height, nextColor())
                                   | _ -> raise(Exception())
                     let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
                     l.[index] <- newRect
                     (new CandidateImage(l), false)
-    
-    type ReplaceSquarePermuter(maxWidth : int, maxHeight: int) = 
-        let mutable annealCount = 2.0
-        interface IPermutationStrategy with
-            member this.name () = "Replace Square"
-            member this.next permCount bestCandidate =
-                if float(permCount) > (annealCount*2000.0) then
-                    annealCount <- float(Math.Pow(annealCount,1.1))
-                    (addRandomRectangle bestCandidate maxWidth maxHeight, true)
-                else
-                    let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
-                    let index = rand.Next( bestCandidate.Rectangles.Length - 1 )
-                    l.[index] <- createRandomRectangle maxWidth maxHeight
-                    (new CandidateImage(l), false)
+
+//    type MoveCornerPermuter(maxWidth : int, maxHeight: int) = 
+//        let mutable annealCount = 2.0
+//        interface IPermutationStrategy with
+//            member this.name () = "Move Corner"
+//            member this.next permCount bestCandidate =
+//                if float(permCount) > (annealCount*2000.0) then
+//                    annealCount <- float(Math.Pow(annealCount,1.1))
+//                    (addRandomRectangle bestCandidate maxWidth maxHeight, true)
+//                else
+//                    let index = rand.Next( bestCandidate.Rectangles.Length )
+//                    let oldRect = bestCandidate.Rectangles.[index]
+//                    let newRect = match rand.Next(5) with
+//                                  | 0 | 1 -> 
+//                                    let x = rand.Next(oldRect.Right)
+//                                    let y = rand.Next(oldRect.Bottom)
+//                                    new ColoredRectangle(x, y, oldRect.Right-x, oldRect.Bottom-y, oldRect.Color)
+//                                  | 2 | 3 -> 
+//                                    let r = rand.Next(oldRect.Left, maxWidth)
+//                                    let b = rand.Next(oldRect.Top, maxHeight)
+//                                    new ColoredRectangle(oldRect.X, oldRect.Y, r-oldRect.Left, b-oldRect.Top, oldRect.Color)
+//                                  | 4 -> new ColoredRectangle(oldRect.X, oldRect.Y, oldRect.Width, oldRect.Height, nextColor())
+//                                  | _ -> raise(Exception())
+//                    let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
+//                    l.[index] <- newRect
+//                    (new CandidateImage(l), false)
+//    
+//    type ReplaceSquarePermuter(maxWidth : int, maxHeight: int) = 
+//        let mutable annealCount = 2.0
+//        interface IPermutationStrategy with
+//            member this.name () = "Replace Square"
+//            member this.next permCount bestCandidate =
+//                if float(permCount) > (annealCount*2000.0) then
+//                    annealCount <- float(Math.Pow(annealCount,1.1))
+//                    (addRandomRectangle bestCandidate maxWidth maxHeight, true)
+//                else
+//                    let l = bestCandidate.Rectangles.Clone() :?> ColoredRectangle[]
+//                    let index = rand.Next( bestCandidate.Rectangles.Length - 1 )
+//                    l.[index] <- createRandomRectangle maxWidth maxHeight
+//                    (new CandidateImage(l), false)
 
     let state = new GameState(Image.FromFile("c:\Users\willt\My Dropbox\Genetic\monalisa_small_grey.png") :?> Bitmap)
     let glWindow = new PreviewWindow(state)
 
-    let permuter = MoveCornerPermuter(state.Width, state.Height) :> IPermutationStrategy
+    let permuter = MoveEdgePermuter(state.Width, state.Height) :> IPermutationStrategy
 
-    let saveCandidateFile (candidate:CandidateImage) =
-        try
-            System.IO.File.WriteAllLines( "save.txt", 
-                [ for r in candidate.Rectangles -> sprintf "%ix%i %ix%i %s" r.X r.Y r.Width r.Height (r.Color.ToString()) ] )
-        with
-        | _ -> () //Don't care about errors
+    let saveCount,savedRects = Persistence.readCandidateFile ()
 
-    state.BestCandidate.Value <- addRandomRectangle (CandidateImage()) state.Width state.Height
-    state.BestCandidate.Value.Fitness <- Fitness.calculateFitness state.BitmapData !state.BestCandidate
+    if saveCount > 0 then
+        state.PermutationCount.Value <- saveCount
+        state.BestCandidate.Value <- CandidateImage(savedRects)
+        state.BestCandidate.Value.Fitness <- Fitness.calculateFitness state.BitmapData !state.BestCandidate
+    else
+        state.BestCandidate.Value <- addRandomRectangle (CandidateImage()) state.Width state.Height
+        state.BestCandidate.Value.Fitness <- Fitness.calculateFitness state.BitmapData !state.BestCandidate
 
     let iteration () =
         let setBestCandidate c =
             state.BestCandidate.Value <- c
-            saveCandidateFile !state.BestCandidate
+            Persistence.saveCandidateFile !state.BestCandidate
         let cand, force = permuter.next !state.PermutationCount !state.BestCandidate 
         Interlocked.Increment state.PermutationCount |> ignore
         cand.Fitness <- Fitness.calculateFitness state.BitmapData cand
