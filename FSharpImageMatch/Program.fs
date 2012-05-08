@@ -41,12 +41,10 @@ module Program =
 //            member this.next permCount bestCandidate = (bestCandidate, false)
     
     type MoveEdgePermuter(maxWidth : int, maxHeight: int) = 
-        let mutable annealCount = 1000
         interface IPermutationStrategy with
             member this.name () = "Move Edge"
             member this.next permCount bestCandidate =
-                if permCount > annealCount then
-                    annealCount <- annealCount + 2000
+                if permCount / 32000 > bestCandidate.Rectangles.Length then
                     (addRandomRectangle bestCandidate maxWidth maxHeight, true)
                 else
                     let index = rand.Next( bestCandidate.Rectangles.Length )

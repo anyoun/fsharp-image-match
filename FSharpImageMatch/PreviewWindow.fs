@@ -13,7 +13,7 @@ open System.Collections.Generic
 open ImageLib
 
 type PreviewWindow(state:GameState) =
-    inherit GameWindow(800, 600, GraphicsMode(ColorFormat(32), 16, 16))
+    inherit GameWindow(790, 370, GraphicsMode(ColorFormat(32), 16, 16))
     let textPrinter = new TextPrinter(TextQuality.Low)
     let font = new Font("Consolas", 12.0f)
     let mutable origImageTexture = 0
@@ -62,6 +62,7 @@ type PreviewWindow(state:GameState) =
         GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha)
 
     member this.RunWindow() = 
+        this.Title <- "F# Image Match"
         this.Run(1.0, 60.0)
 
     override this.OnResize(e) = 
