@@ -23,5 +23,13 @@ namespace TestProject1 {
 			c = new FastColor(67, 255, 255, 255).Blend(c);
 			Expect(c, Is.EqualTo(new FastColor(152, 152, 152)));
 		}
+
+		[Test]
+		public void TestMemoryBitmap() {
+			var bmp = MemoryBitmap.Create(100, 100);
+			for (int x = 0; x < 100; x++)
+				for (int y = 0; y < 100; y++) 
+					Expect(bmp.GetPixel(x, y), Is.EqualTo(FastColor.Black));
+		}
 	}
 }

@@ -35,6 +35,16 @@ namespace ImageLib {
 
 		public ColoredRectangle[] Rectangles { get { return m_Rectangles; } }
 		public float Fitness { get; set; }
+
+		public FastColor GetPixel(int x, int y) {
+			var c = FastColor.Black;
+			for (int i = 0; i < m_Rectangles.Length; i++) {
+				var h = m_Rectangles[i];
+				if (x >= h.X && y >= h.Y && x < h.X + h.Width && y < h.Y + h.Height)
+					c = h.Color.Blend(c);
+			}
+			return c;
+		}
 	}
 
 	//public class ImageRenderer {
@@ -153,59 +163,72 @@ namespace ImageLib {
 		}
 	}
 
-	//public unsafe class MemoryBitmap {
-	//    private readonly IntPtr m_Data;
-	//    private readonly int m_Width, m_Height, m_Stride;
+	public class MemoryBitmap : IDisposable {
+		private readonly FastColor[] m_Pixels;
+		private readonly int m_Width, m_Height;
 
-	//    public MemoryBitmap(int width, int height) {
-	//        m_Data = UnmanagedMemory.Alloc(width * height * 4);
-	//        m_Width = width;
-	//        m_Stride = width;
-	//        m_Height = height;
-	//    }
+		private MemoryBitmap(int width, int height) {
+			m_Pixels = new FastColor[width * height];
+			m_Width = width;
+			m_Height = height;
+		}
+		public void Clear() {
+			for (int i = 0; i < m_Pixels.Length; i ++) {
+				m_Pixels[i] = FastColor.Black;
+			}
+		}
 
-	//    public static MemoryBitmap FromBitmap(Bitmap b) {
-	//        using (var d = b.LockBits()) {
+		private static readonly Dictionary<Tuple<int, int>, Stack<MemoryBitmap>> m_ObjectPool = new Dictionary<Tuple<int, int>, Stack<MemoryBitmap>>();
+		private static readonly object m_ObjectPoolGuard = new object();
 
-	//            var memBitmap = new MemoryBitmap(d.Width, d.Height);
+		public static MemoryBitmap Create(int width, int height) {
+			var key = Tuple.Create(width, height);
+			MemoryBitmap bitmap = null;
+			lock (m_ObjectPoolGuard) {
+				Stack<MemoryBitmap> bucket;
+				if (!m_ObjectPool.TryGetValue(key, out bucket))
+					m_ObjectPool.Add(key, bucket = new Stack<MemoryBitmap>());
+				if (bucket.Count > 0) bitmap = bucket.Pop();
+			}
+			if (bitmap == null) bitmap = new MemoryBitmap(width, height);
+			bitmap.Clear();
+			return bitmap;
+		}
+		void IDisposable.Dispose() {
+			var key = Tuple.Create(m_Width, m_Height);
+			lock (m_ObjectPoolGuard) {
+				Stack<MemoryBitmap> bucket;
+				if (!m_ObjectPool.TryGetValue(key, out bucket))
+					m_ObjectPool.Add(key, bucket = new Stack<MemoryBitmap>());
+				bucket.Push(this);
+			}
+		}
 
-	//            for (int h = 0; h < d.Height; h++) {
-	//                var src = (d.Scan0 + h * d.Stride);
-	//                var dst = (memBitmap.m_Data + h * memBitmap.Stride);
-	//                UnmanagedMemory.Copy(src, dst, d.Width);
-	//            }
+		public int Width { get { return m_Width; } }
+		public int Height { get { return m_Height; } }
 
-	//            return memBitmap;
-	//        }
-	//    }
-
-	//    public int Width { get { return m_Width; } }
-	//    public int Stride { get { return m_Stride; } }
-	//    public int Height { get { return m_Height; } }
-
-	//    public Color GetPixel(int x, int y) {
-	//        var row = (byte*)(m_Data + y * Stride);
-	//        return Color.FromArgb(
-	//                    row[x * 4 + 3],
-	//                    row[x * 4 + 2],
-	//                    row[x * 4 + 1],
-	//                    row[x * 4 + 0]);
-	//    }
-	//    public void SetPixel(int x, int y, Color c) {
-	//        var row = (byte*)(m_Data + y * Stride);
-	//        row[x * 4 + 3] = c.A;
-	//        row[x * 4 + 2] = c.R;
-	//        row[x * 4 + 1] = c.G;
-	//        row[x * 4 + 0] = c.B;
-	//    }
-
-	//    void Finalize() {
-	//        UnmanagedMemory.Free(m_Data);
-	//    }
-	//}
+		public FastColor GetPixel(int x, int y) {
+#if DEBUG
+			if (x >= Width || x < 0) throw new ArgumentOutOfRangeException("x");
+			if (y >= Height || y < 0) throw new ArgumentOutOfRangeException("y");
+#endif
+			return m_Pixels[y * Width + x];
+		}
+		public void SetPixel(int x, int y, FastColor c) {
+#if DEBUG
+			if (x >= Width || x < 0) throw new ArgumentOutOfRangeException("x");
+			if (y >= Height || y < 0) throw new ArgumentOutOfRangeException("y");
+#endif
+			m_Pixels[y * Width + x] = c;
+		}
+	}
 
 	public struct FastColor : IEquatable<FastColor> {
 		public readonly Int32 Value;
+
+		public FastColor(Int32 value) {
+			Value = value;
+		}
 		public FastColor(byte alpha, byte red, byte green, byte blue) {
 			Value = alpha << 24 | red << 16 | green << 8 | blue;
 		}

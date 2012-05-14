@@ -16,7 +16,7 @@ module Persistence =
         with
         | _ -> () //Don't care about errors
 
-    let readCandidateFile () =
+    let readCandidateLines lines =
         let parseLine s = 
             let pattern = @"(\d+)x(\d+) (\d+)x(\d+) A:(\d+) R:(\d+) G:(\d+) B:(\d+)"
             let m = Regex.Match(s, pattern)
@@ -24,7 +24,9 @@ module Persistence =
             let captures = m.Groups
             let color = new FastColor(byte captures.[5].Value, byte captures.[6].Value, byte captures.[7].Value, byte captures.[8].Value)
             new ColoredRectangle(int captures.[1].Value, int captures.[2].Value, int captures.[3].Value, int captures.[4].Value, color)
-        let lines = System.IO.File.ReadAllLines("save.txt")
         let firstLine = Seq.head lines
         let perutationCount = int firstLine
         ( perutationCount, Array.ofSeq (Seq.map parseLine (Seq.skip 1 lines)) )
+
+    let readCandidateFile () = readCandidateLines (System.IO.File.ReadAllLines("save.txt"))
+    let readCandidateString (s:string) = readCandidateLines (s.Split( [|'\r'; '\n'|], StringSplitOptions.RemoveEmptyEntries))
