@@ -99,25 +99,23 @@ type public PerformanceTests () =
         let saveCount,savedRects = Persistence.readCandidateString candidateString
         let testImage = CandidateImage(savedRects)
 
-        let benchmarkCount = 100
-        //let add c = PermuteHelper.addRandomRectangle c state.Width state.Height
-        //let testImage = CandidateImage() |> add |> add |> add |> add
+        let benchmarkCount = 10000
         
-        let sw = System.Diagnostics.Stopwatch.StartNew()
-        for i = 0 to benchmarkCount do
-            Fitness.calculateFitnessNoPainting state.BitmapData testImage |> ignore
-        printfn "%f calculateFitness (no painting) per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
+//        let sw = System.Diagnostics.Stopwatch.StartNew()
+//        for i = 0 to benchmarkCount do
+//            Fitness.calculateFitnessNoPainting state.BitmapData testImage |> ignore
+//        printfn "%f calculateFitness (no painting) per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
 
         let sw = System.Diagnostics.Stopwatch.StartNew()
         for i = 0 to benchmarkCount do
             Fitness.calculateFitnessPainting state.BitmapData testImage |> ignore
         printfn "%f calculateFitness (painting) per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
 
-        let permuter = MoveEdgePermuter(state.Width, state.Height) :> IPermutationStrategy
-        let sw = System.Diagnostics.Stopwatch.StartNew()
-        for i = 0 to benchmarkCount do
-            permuter.next saveCount testImage |> ignore
-        printfn "%f permutations per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
+//        let permuter = MoveEdgePermuter(state.Width, state.Height) :> IPermutationStrategy
+//        let sw = System.Diagnostics.Stopwatch.StartNew()
+//        for i = 0 to benchmarkCount do
+//            permuter.next saveCount testImage |> ignore
+//        printfn "%f permutations per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
 
         let sw = System.Diagnostics.Stopwatch.StartNew()
         for i = 0 to benchmarkCount do
@@ -125,27 +123,13 @@ type public PerformanceTests () =
                 for x = 0 to state.Width do
                     state.BitmapData.GetPixel(x,y) |> ignore
         printfn "%f access bitmaps per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
-
-        let sw = System.Diagnostics.Stopwatch.StartNew()
-        for i = 0 to benchmarkCount do
-            for y = 0 to state.Height do
-                for x = 0 to state.Width do
-                    Fitness.getCandidatePixel testImage x y |> ignore
-        printfn "%f access candidates per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
-
-        let sw = System.Diagnostics.Stopwatch.StartNew()
-        for i = 0 to benchmarkCount do
-            for y = 0 to state.Height do
-                for x = 0 to state.Width do
-                    Fitness.getCandidatePixelNoBlend testImage x y |> ignore
-        printfn "%f access candidates (no blend) per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
-
-        let sw = System.Diagnostics.Stopwatch.StartNew()
-        for i = 0 to benchmarkCount do
-            for y = 0 to state.Height do
-                for x = 0 to state.Width do
-                    testImage.GetPixel(x,y) |> ignore
-        printfn "%f access candidates (C#) per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
+//
+//        let sw = System.Diagnostics.Stopwatch.StartNew()
+//        for i = 0 to benchmarkCount do
+//            for y = 0 to state.Height do
+//                for x = 0 to state.Width do
+//                    Fitness.getCandidatePixel testImage x y |> ignore
+//        printfn "%f access candidates per second" (float benchmarkCount / sw.Elapsed.TotalSeconds)
         
     [<TestMethod>]
     member this.TestFitness () =

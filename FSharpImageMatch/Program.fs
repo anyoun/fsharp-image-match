@@ -7,8 +7,7 @@ open ImageLib
 
 module Program =
 
-
-    let state = new GameState(Image.FromFile("c:\Users\willt\My Dropbox\Genetic\monalisa_small_grey.png") :?> Bitmap)
+    let state = new GameState(Image.FromFile("monalisa_small_grey.png") :?> Bitmap)
     let glWindow = new PreviewWindow(state)
 
     let permuter = MoveEdgePermuter(state.Width, state.Height) :> IPermutationStrategy
@@ -25,17 +24,16 @@ module Program =
         state.BestCandidate.Value.Fitness <- Fitness.calculateFitness state.BitmapData !state.BestCandidate
 
     let iteration () =
-        let setBestCandidate c =
-            state.BestCandidate.Value <- c
-            Persistence.saveCandidateFile !state.PermutationCount !state.BestCandidate
+        let sequence = state.SequenceNumber
         let cand, force = permuter.next !state.PermutationCount !state.BestCandidate 
         Interlocked.Increment state.PermutationCount |> ignore
         cand.Fitness <- Fitness.calculateFitness state.BitmapData cand
         state.SomeCandidate.Value <- cand
-        if force then
-            setBestCandidate cand
-        else if cand.Fitness > (!state.BestCandidate).Fitness then
-            setBestCandidate cand
+
+        if force || (cand.Fitness > (!state.BestCandidate).Fitness && state.SequenceNumber=sequence) then
+            state.BestCandidate.Value <- cand
+            Interlocked.Increment state.SequenceNumber |> ignore
+            Persistence.saveCandidateFile !state.PermutationCount !state.BestCandidate
     
     let threadProc () =  while true do iteration()
     for i = 0 to 3 do

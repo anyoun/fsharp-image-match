@@ -20,8 +20,8 @@ type PreviewWindow(state:GameState) =
     let imageWidth = float32 (state.Width)
     let imageHeight = float32 (state.Height)
 
-    let recentFrameCount = 5 * 30
-    let recentFrameTimestamps = new LinkedList<int64>()
+    let recentFrameCount = 30
+    let recentFrameTimestamps = new LinkedList<float>()
     let recentFramePermutationCounts = new LinkedList<int>()
   
     let drawImageOutline () =
@@ -40,7 +40,7 @@ type PreviewWindow(state:GameState) =
 
         drawImageOutline ()
         for rect in cand.Rectangles do
-            GL.Color4(rect.Color.R, rect.Color.G, rect.Color.B, rect.Color.A)
+            GL.Color4(rect.Color.ToColor())
             GL.Begin(BeginMode.Quads)
             GL.Vertex2(rect.X, rect.Y)
             GL.Vertex2(rect.X, rect.Y+rect.Height)
@@ -63,7 +63,7 @@ type PreviewWindow(state:GameState) =
 
     member this.RunWindow() = 
         this.Title <- "F# Image Match"
-        this.Run(1.0, 60.0)
+        this.Run(1.0, 30.0)
 
     override this.OnResize(e) = 
         GL.Viewport(0, 0, this.ClientSize.Width, this.ClientSize.Height)
@@ -89,13 +89,13 @@ type PreviewWindow(state:GameState) =
         recentFramePermutationCounts.AddLast(!state.PermutationCount) |> ignore
         if recentFramePermutationCounts.Count > recentFrameCount then
             recentFramePermutationCounts.RemoveFirst()
-        recentFrameTimestamps.AddLast(Stopwatch.GetTimestamp()/Stopwatch.Frequency) |> ignore
+        recentFrameTimestamps.AddLast(float (Stopwatch.GetTimestamp()) / float Stopwatch.Frequency) |> ignore
         if recentFrameTimestamps.Count > recentFrameCount then
             recentFrameTimestamps.RemoveFirst()
 
-        let totalTicks = recentFrameTimestamps.Last.Value - recentFrameTimestamps.First.Value
+        let totalSeconds = recentFrameTimestamps.Last.Value - recentFrameTimestamps.First.Value
         let countChange = recentFramePermutationCounts.Last.Value - recentFramePermutationCounts.First.Value
-        let ips = float(countChange)/float(totalTicks)
+        let ips = float(countChange)/totalSeconds
         
         textPrinter.Print(sprintf "Iteration: %i   at %.0f ips" !state.PermutationCount ips, font, Color.White)
 
@@ -118,9 +118,12 @@ type PreviewWindow(state:GameState) =
         drawImageOutline ()
         GL.Begin(BeginMode.Points)
         let maxError = float (255*25)
-        for y = 0 to int imageHeight do
-            for x = 0 to int imageWidth do
-                let error = float (Fitness.getPixelError state.BitmapData bestCand x y)
+        let candidateBmp = Fitness.drawCandidate bestCand state.Width state.Height
+        for y = 0 to int imageHeight-1 do
+            for x = 0 to int imageWidth-1 do
+                let origPixel = state.BitmapData.GetPixel(x,y)
+                let candPixel = candidateBmp.GetPixel(x,y)
+                let error = float (Fitness.getPixelError origPixel candPixel)
                 let color = error/maxError
                 GL.Color4( color, color, color, 1.0 )
                 GL.Vertex2(x, y)

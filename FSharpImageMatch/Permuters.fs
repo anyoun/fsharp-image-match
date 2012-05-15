@@ -12,11 +12,7 @@ module PermuteHelper =
     let rand = Random()
 
     let nextColor () = 
-        //Color.FromArgb(alpha, rand.Next(255), rand.Next(255), rand.Next(255))
-        //FastColor(alpha, 255uy, 255uy, 255uy)
-        //FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
         FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
-        //FastColor(alpha, 255uy, 255uy, 255uy)
 
     let createRandomRectangle maxWidth maxHeight =
         let l = rand.Next maxWidth
@@ -46,7 +42,7 @@ type MoveEdgePermuter(maxWidth : int, maxHeight: int) =
     interface IPermutationStrategy with
         member this.name () = "Move Edge"
         member this.next permCount bestCandidate =
-            if permCount / 32000 > bestCandidate.Rectangles.Length then
+            if permCount / 2000 > bestCandidate.Rectangles.Length then
                 (PermuteHelper.addRandomRectangle bestCandidate maxWidth maxHeight, true)
             else
                 let index = PermuteHelper.rand.Next( bestCandidate.Rectangles.Length )

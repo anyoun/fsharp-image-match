@@ -28,5 +28,9 @@ module Persistence =
         let perutationCount = int firstLine
         ( perutationCount, Array.ofSeq (Seq.map parseLine (Seq.skip 1 lines)) )
 
-    let readCandidateFile () = readCandidateLines (System.IO.File.ReadAllLines("save.txt"))
+    let readCandidateFile () =
+        try
+            readCandidateLines (System.IO.File.ReadAllLines("save.txt"))
+        with
+        | _ -> (0, Array.empty)
     let readCandidateString (s:string) = readCandidateLines (s.Split( [|'\r'; '\n'|], StringSplitOptions.RemoveEmptyEntries))

@@ -19,9 +19,7 @@ module Fitness =
                 c <- h.Color
         c
 
-    let getPixelError (original:DisposableBitmapData) (candidate:CandidateImage) x y =
-        let origPixel = original.GetPixel(x,y)
-        let candPixel = getCandidatePixel candidate x y
+    let getPixelError (origPixel:FastColor) (candPixel:FastColor) =
         let rDiff = (float32 origPixel.R)-(float32 candPixel.R)
         let gDiff = (float32 origPixel.G)-(float32 candPixel.G)
         let bDiff = (float32 origPixel.B)-(float32 candPixel.B)
@@ -66,6 +64,7 @@ module Fitness =
 
 type GameState(orignalBitmap : Bitmap) =
     let permutationCount = ref 0
+    let sequenceNumber = ref 0
     let bestCandidate = ref (new CandidateImage())
     let someCandidate = ref (new CandidateImage())
     let origBitmapData = orignalBitmap.LockBits()
@@ -76,5 +75,6 @@ type GameState(orignalBitmap : Bitmap) =
     member this.Height with get () = orignalBitmap.Height
     member this.BitmapData with get () = origBitmapData
     member this.PermutationCount with get () = permutationCount
+    member this.SequenceNumber with get () = sequenceNumber
     member this.BestCandidate with get () = bestCandidate
     member this.SomeCandidate with get () = someCandidate

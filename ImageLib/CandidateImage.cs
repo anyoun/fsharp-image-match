@@ -123,32 +123,39 @@ namespace ImageLib {
 	public class DisposableBitmapData : IDisposable {
 		private readonly Bitmap m_Bitmap;
 		private readonly BitmapData m_BitmapData;
+		private readonly IntPtr m_Scan0;
+		private readonly int m_Stride, m_Width, m_Height;
+		private readonly PixelFormat m_PixelFormat;
 
 		public DisposableBitmapData(Bitmap bitmap, BitmapData bitmapData) {
 			m_Bitmap = bitmap;
 			m_BitmapData = bitmapData;
+			m_Scan0 = m_BitmapData.Scan0;
+			m_Stride = m_BitmapData.Stride;
+			m_Width = m_BitmapData.Width;
+			m_Height = m_BitmapData.Height;
+			m_PixelFormat = m_BitmapData.PixelFormat;
 		}
 
-		public int Height { get { return m_BitmapData.Height; } }
-		public int Width { get { return m_BitmapData.Width; } }
+		public int Height { get { return m_Height; } }
+		public int Width { get { return m_Width; } }
 		public PixelFormat PixelFormat { get { return m_BitmapData.PixelFormat; } }
 
-		public IntPtr Scan0 { get { return m_BitmapData.Scan0; } }
-		public int Stride { get { return m_BitmapData.Stride; } }
+		public IntPtr Scan0 { get { return m_Scan0; } }
+		public int Stride { get { return m_Stride; } }
 
 		public unsafe FastColor GetPixel(int x, int y) {
-			var row = (byte*)(m_BitmapData.Scan0 + y * Stride);
-			switch (m_BitmapData.PixelFormat) {
+			var row = (byte*)(m_Scan0 + y * m_Stride);
+			switch (m_PixelFormat) {
 				case PixelFormat.Format24bppRgb:
 					return new FastColor(
-						255,
 						row[x * 3 + 2],
 						row[x * 3 + 1],
 						row[x * 3 + 0]);
 
 				case PixelFormat.Format32bppArgb:
 					return new FastColor(
-						row[x * 4 + 3],
+						//row[x * 4 + 3],
 						row[x * 4 + 2],
 						row[x * 4 + 1],
 						row[x * 4 + 0]);
@@ -173,7 +180,7 @@ namespace ImageLib {
 			m_Height = height;
 		}
 		public void Clear() {
-			for (int i = 0; i < m_Pixels.Length; i ++) {
+			for (int i = 0; i < m_Pixels.Length; i++) {
 				m_Pixels[i] = FastColor.Black;
 			}
 		}
@@ -224,49 +231,41 @@ namespace ImageLib {
 	}
 
 	public struct FastColor : IEquatable<FastColor> {
-		public readonly Int32 Value;
-
-		public FastColor(Int32 value) {
-			Value = value;
-		}
 		public FastColor(byte alpha, byte red, byte green, byte blue) {
-			Value = alpha << 24 | red << 16 | green << 8 | blue;
+			A = alpha;
+			R = (byte)(red * alpha / 255);
+			G = (byte)(green * alpha / 255);
+			B = (byte)(blue * alpha / 255);
 		}
-		public FastColor(byte red, byte green, byte blue)
-			: this(255, red, green, blue) {
+		public FastColor(byte red, byte green, byte blue) {
+			A = 255;
+			R = red;
+			G = green;
+			B = blue;
 		}
 
-		public byte A { get { return (byte)(Value >> 24 & 255); } }
-		public byte R { get { return (byte)(Value >> 16 & 255); } }
-		public byte G { get { return (byte)(Value >> 8 & 255); } }
-		public byte B { get { return (byte)(Value & 255); } }
+		public readonly byte A;
+		public readonly byte R;
+		public readonly byte G;
+		public readonly byte B;
 
 		private static byte ToByte(int i) {
 			return i > 255 ? (byte)255 : (byte)i;
 		}
 		public FastColor Blend(FastColor b) {
+			//Assuming's b's alpha is 255
 			byte aBlend = (byte)((255 - this.A));
-			byte newA = ToByte(this.A + aBlend);
 			return new FastColor(
-				newA,
-				(byte)((this.A * this.R + b.R * aBlend) / newA),
-				(byte)((this.A * this.G + b.G * aBlend) / newA),
-				(byte)((this.A * this.B + b.B * aBlend) / newA));
+				(byte)(this.R + b.R * aBlend / 255),
+				(byte)(this.G + b.G * aBlend / 255),
+				(byte)(this.B + b.B * aBlend / 255));
 		}
 
-		public override string ToString() {
-			return string.Format("A:{0} R:{1} G:{2} B:{3}", A, R, G, B);
-		}
+		public override string ToString() { return string.Format("A:{0} R:{1} G:{2} B:{3}", A, R, G, B); }
+		public Color ToColor() { return Color.FromArgb(A, R / A * 255, G / A * 255, B / A * 255); }
+		public bool Equals(FastColor other) { return A == other.A && R == other.R && G == other.G && B == other.B; }
 
-		public static readonly FastColor Black = new FastColor(255, 0, 0, 0);
-		public static readonly FastColor White = new FastColor(255, 255, 255, 255);
-
-		public Color ToColor() {
-			return Color.FromArgb(Value);
-		}
-
-		public bool Equals(FastColor other) {
-			return Value == other.Value;
-		}
+		public static readonly FastColor Black = new FastColor(0, 0, 0);
+		public static readonly FastColor White = new FastColor(255, 255, 255);
 	}
 }
