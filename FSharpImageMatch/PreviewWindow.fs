@@ -63,7 +63,8 @@ type PreviewWindow(state:GameState) =
 
     member this.RunWindow() = 
         this.Title <- "F# Image Match"
-        this.Run(1.0, 30.0)
+        this.Context.VSync <- true
+        this.Run(30.0, 30.0)
 
     override this.OnResize(e) = 
         GL.Viewport(0, 0, this.ClientSize.Width, this.ClientSize.Height)
@@ -73,12 +74,13 @@ type PreviewWindow(state:GameState) =
 
     override this.OnUpdateFrame(e) = 
         base.OnUpdateFrame(e)
+        System.Threading.Thread.Sleep(30)
 
     override this.OnRenderFrame(e) =
         base.OnRenderFrame(e)
 
         GL.Clear(ClearBufferMask.ColorBufferBit)
-
+        
         let bestCand = !state.BestCandidate
         let someCand = !state.SomeCandidate
 
@@ -153,4 +155,5 @@ type PreviewWindow(state:GameState) =
 
         GL.PopMatrix()
 
+        GL.Finish()
         this.SwapBuffers()
