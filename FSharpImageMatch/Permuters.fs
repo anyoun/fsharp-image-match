@@ -12,7 +12,8 @@ module PermuteHelper =
     let rand = Random()
 
     let nextColor () = 
-        FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
+        //FastColor(byte(rand.Next(64,192)), 255uy, 255uy, 255uy)
+        FastColor(byte(rand.Next(64,192)), byte(rand.Next(0,255)), byte(rand.Next(0,255)), byte(rand.Next(0,255)))
 
     let createRandomRectangle maxWidth maxHeight =
         let l = rand.Next maxWidth

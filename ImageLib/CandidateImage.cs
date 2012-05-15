@@ -262,7 +262,7 @@ namespace ImageLib {
 		}
 
 		public override string ToString() { return string.Format("A:{0} R:{1} G:{2} B:{3}", A, R, G, B); }
-		public Color ToColor() { return Color.FromArgb(A, R / A * 255, G / A * 255, B / A * 255); }
+		public Color ToColor() { return Color.FromArgb(A, R * 255 / A, G * 255 / A, B * 255 / A); }
 		public bool Equals(FastColor other) { return A == other.A && R == other.R && G == other.G && B == other.B; }
 
 		public static readonly FastColor Black = new FastColor(0, 0, 0);

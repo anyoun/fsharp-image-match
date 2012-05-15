@@ -7,7 +7,7 @@ open ImageLib
 
 module Program =
 
-    let state = new GameState(Image.FromFile("monalisa_small_grey.png") :?> Bitmap)
+    let state = new GameState(Image.FromFile("monalisa_small.png") :?> Bitmap)
     let glWindow = new PreviewWindow(state)
 
     let permuter = MoveEdgePermuter(state.Width, state.Height) :> IPermutationStrategy
